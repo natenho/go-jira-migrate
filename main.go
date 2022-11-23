@@ -10,12 +10,12 @@ import (
 const defaultWorkerPoolSize = 8
 
 func main() {
-	var sourceUrl = flag.String("s", "", "Source JIRA URL")
-	var targetUrl = flag.String("t", "", "Target JIRA URL")
+	var sourceUrl = flag.String("s", "", "Source JIRA URL (e.g. https://your-source-domain.atlassian.net/)")
+	var targetUrl = flag.String("t", "", "Target JIRA URL (e.g. https://your-target-domain.atlassian.net/)")
 	var user = flag.String("u", "", "User")
-	var apiKey = flag.String("k", "", "API Key")
+	var apiKey = flag.String("k", "", "API Key (to create one, visit https://tinyurl.com/jira-api-token/)")
 	var projectKey = flag.String("p", "", "Project Key")
-	var jql = flag.String("q", "", "JQL query returning issues to be migrated from a single project")
+	var jql = flag.String("q", "", "JQL query returning issues to be migrated from the selected project")
 	var workers = flag.Int("w", defaultWorkerPoolSize, "How many migrations should occur in parallel")
 
 	flag.Parse()
