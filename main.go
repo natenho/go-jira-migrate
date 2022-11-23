@@ -26,7 +26,7 @@ func main() {
 		return
 	}
 
-	if *projectKey == "" {
+	if *jql == "" {
 		log.Println("Invalid JQL query")
 		flag.Usage()
 		return
