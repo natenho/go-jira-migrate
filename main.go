@@ -51,7 +51,11 @@ func main() {
 		return
 	}
 
+	var issueCount int
 	for result := range results {
 		log.Println(result)
+		issueCount++
 	}
+
+	log.Printf("%d issues processed.", issueCount)
 }

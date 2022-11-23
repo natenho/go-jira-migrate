@@ -9,10 +9,12 @@ import (
 
 func (s *migrator) migrateAttachments(sourceIssue *jira.Issue, targetIssue *jira.Issue) chan error {
 	wg := &sync.WaitGroup{}
-	wg.Add(len(sourceIssue.Fields.Attachments))
 
 	errChan := make(chan error, len(sourceIssue.Fields.Attachments))
+	defer close(errChan)
+
 	for _, item := range sourceIssue.Fields.Attachments {
+		wg.Add(1)
 		go func(item *jira.Attachment) {
 			errChan <- s.migrateAttachment(item, targetIssue.ID)
 			wg.Done()
@@ -20,7 +22,6 @@ func (s *migrator) migrateAttachments(sourceIssue *jira.Issue, targetIssue *jira
 	}
 
 	wg.Wait()
-	close(errChan)
 	return errChan
 }
 

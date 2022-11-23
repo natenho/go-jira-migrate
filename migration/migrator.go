@@ -25,6 +25,10 @@ func (r Result) String() string {
 	return fmt.Sprintf("%s;%s;%s;%#v", r.SourceKey, r.SourceSummary, r.TargetKey, r.Errors)
 }
 
+func (r Result) HasTargetIssue() bool {
+	return r.TargetKey != ""
+}
+
 type Migrator interface {
 	Execute(projectKey, jql string) (chan Result, error)
 }
