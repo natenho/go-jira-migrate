@@ -157,9 +157,7 @@ func (s *migrator) getSourceUrl(sourceIssue *jira.Issue) string {
 }
 
 func (s *migrator) findTargetIssueBySummary(summary string) (*jira.Issue, error) {
-	const notAllowedSearchChars string = `["](/\)?`
-
-	searchTerm := internal.RemoveCharacters(summary, notAllowedSearchChars)
+	searchTerm := sanitizeForJQL(summary)
 
 	existingIssue, response, err := s.targetClient.Issue.
 		Search(fmt.Sprintf(`project = %s AND summary ~ "%s"`, s.projectKey, searchTerm),
@@ -175,4 +173,21 @@ func (s *migrator) findTargetIssueBySummary(summary string) (*jira.Issue, error)
 	}
 
 	return nil, nil
+}
+
+func sanitizeForJQL(input string) string {
+	input = strings.ReplaceAll(input, " - ", " ")
+	input = strings.ReplaceAll(input, "- ", " ")
+	input = strings.ReplaceAll(input, " -", " ")
+
+	const notAllowedSearchChars string = `["](/\)?`
+
+	filter := func(r rune) rune {
+		if strings.ContainsRune(notAllowedSearchChars, r) {
+			return ' '
+		}
+		return r
+	}
+
+	return strings.Map(filter, input)
 }
