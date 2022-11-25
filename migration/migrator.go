@@ -48,6 +48,8 @@ type migrator struct {
 	sourceFields []jira.Field
 	targetFields []jira.Field
 
+	syncRoot sync.Map
+
 	workerPoolSize int
 }
 
@@ -113,6 +115,7 @@ func NewMigrator(sourceUrl, targetUrl, user, apiToken string, options ...Option)
 		targetClient:               targetClient,
 		sourceTargetSprintMap:      map[int]*jira.Sprint{},
 		sourceTargetCustomFieldMap: map[string]jira.Field{},
+		syncRoot:                   sync.Map{},
 	}
 
 	for _, option := range options {
@@ -166,22 +169,22 @@ func (s *migrator) Execute(projectKey, jql string) (chan Result, error) {
 		return results, nil
 	}
 
-	issueIDs := make(chan string, s.workerPoolSize)
+	issueKeys := make(chan string, s.workerPoolSize)
 	workers := &sync.WaitGroup{}
 
 	for i := 0; i < len(issues) && i < s.workerPoolSize; i++ {
 		workers.Add(1)
-		go s.worker(i, issueIDs, results, workers)
+		go s.worker(i, issueKeys, results, workers)
 	}
 
 	go func() {
 		for {
 			for _, issue := range issues {
-				issueIDs <- issue.ID
+				issueKeys <- issue.Key
 			}
 
 			if response.StartAt+response.MaxResults >= response.Total {
-				close(issueIDs)
+				close(issueKeys)
 				workers.Wait()
 				close(results)
 				return
@@ -190,7 +193,7 @@ func (s *migrator) Execute(projectKey, jql string) (chan Result, error) {
 			options.StartAt += response.MaxResults
 			issues, response, err = s.sourceClient.Issue.Search(jql, options)
 			if err != nil {
-				close(issueIDs)
+				close(issueKeys)
 				close(results)
 				return
 			}
@@ -213,9 +216,9 @@ func getBoard(client *jira.Client, projectKey string) (*jira.Board, error) {
 	return &boards.Values[0], nil
 }
 
-func (s *migrator) worker(id int, issueIDs <-chan string, results chan<- Result, wg *sync.WaitGroup) {
-	for issueID := range issueIDs {
-		results <- s.migrateIssue(issueID)
+func (s *migrator) worker(id int, issueKeys <-chan string, results chan<- Result, wg *sync.WaitGroup) {
+	for issueKey := range issueKeys {
+		results <- s.migrateIssue(issueKey)
 	}
 
 	wg.Done()

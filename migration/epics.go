@@ -13,7 +13,7 @@ func (s *migrator) setupTargetEpic(sourceIssue *jira.Issue, targetIssue *jira.Is
 	}
 	defer response.Body.Close()
 
-	parentIssueMigrateResult := s.migrateIssue(parentIssue.ID)
+	parentIssueMigrateResult := s.migrateIssue(parentIssue.Key)
 	if !parentIssueMigrateResult.HasTargetIssue() {
 		return parentIssueMigrateResult.Errors[0]
 	}

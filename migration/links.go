@@ -46,7 +46,7 @@ func (s *migrator) migrateLink(link *jira.IssueLink, sourceIssue *jira.Issue, ta
 	if link.InwardIssue == nil {
 		targetInwardIssue = targetIssue
 	} else {
-		sourceInwardIssue, err := s.getSourceIssueByID(link.InwardIssue.ID)
+		sourceInwardIssue, err := s.getSourceIssueByKey(link.InwardIssue.Key)
 		if err != nil {
 			return err
 		}
@@ -57,7 +57,7 @@ func (s *migrator) migrateLink(link *jira.IssueLink, sourceIssue *jira.Issue, ta
 		}
 
 		if targetInwardIssue == nil && sourceInwardIssue.Fields.Resolution == nil {
-			result := s.migrateIssue(sourceInwardIssue.ID)
+			result := s.migrateIssue(sourceInwardIssue.Key)
 			if !result.HasTargetIssue() {
 				return errors.Errorf("could not create link: %s could not be created on target: %#v", sourceInwardIssue.Key, result.Errors)
 			}
@@ -73,7 +73,7 @@ func (s *migrator) migrateLink(link *jira.IssueLink, sourceIssue *jira.Issue, ta
 	if link.OutwardIssue == nil {
 		targetOutwardIssue = targetIssue
 	} else {
-		sourceOutwardIssue, err := s.getSourceIssueByID(link.OutwardIssue.ID)
+		sourceOutwardIssue, err := s.getSourceIssueByKey(link.OutwardIssue.Key)
 		if err != nil {
 			return err
 		}
@@ -85,7 +85,7 @@ func (s *migrator) migrateLink(link *jira.IssueLink, sourceIssue *jira.Issue, ta
 			}
 
 			if targetOutwardIssue == nil {
-				result := s.migrateIssue(sourceOutwardIssue.ID)
+				result := s.migrateIssue(sourceOutwardIssue.Key)
 				if !result.HasTargetIssue() {
 					return errors.Errorf("could not create link: %s could not be created on target: %#v", sourceOutwardIssue.Key, result.Errors)
 				}

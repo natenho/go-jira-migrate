@@ -4,18 +4,22 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/natenho/go-jira"
-	"github.com/natenho/go-jira-migrate/internal"
 	"github.com/pkg/errors"
 	"github.com/trivago/tgo/tcontainer"
 )
 
-func (s *migrator) migrateIssue(issueID string) Result {
+func (s *migrator) migrateIssue(issueKey string) Result {
 	result := Result{}
 
-	sourceIssue, err := s.getSourceIssueByID(issueID)
+	mutex, _ := s.syncRoot.LoadOrStore(issueKey, &sync.Mutex{})
+	mutex.(*sync.Mutex).Lock()
+	defer mutex.(*sync.Mutex).Unlock()
+
+	sourceIssue, err := s.getSourceIssueByKey(issueKey)
 	if err != nil {
 		result.Errors = append(result.Errors, err)
 		return result
@@ -91,8 +95,8 @@ func (s *migrator) migrateIssue(issueID string) Result {
 	return result
 }
 
-func (s *migrator) getSourceIssueByID(issueID string) (*jira.Issue, error) {
-	issue, response, err := s.sourceClient.Issue.Get(issueID, nil)
+func (s *migrator) getSourceIssueByKey(issueKey string) (*jira.Issue, error) {
+	issue, response, err := s.sourceClient.Issue.Get(issueKey, nil)
 	if err != nil {
 		return nil, parseResponseError("Get", response, err)
 	}
