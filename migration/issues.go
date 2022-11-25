@@ -26,7 +26,6 @@ func (s *migrator) migrateIssue(issueKey string) Result {
 	}
 
 	if sourceIssue.Fields.Project.Key != s.projectKey {
-		result.Errors = append(result.Errors, errors.Errorf("unable migrate: %s does not belong to %s", sourceIssue.Key, s.projectKey))
 		return result
 	}
 
