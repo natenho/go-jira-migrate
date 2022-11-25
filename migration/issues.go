@@ -118,31 +118,31 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 		},
 	}
 
-	if sourceIssue.Fields.Assignee != nil && sourceIssue.Fields.Assignee.Active {
+	if canSetAssignee(sourceIssue) {
 		targetIssue.Fields.Assignee = sourceIssue.Fields.Assignee
 	}
 
-	if sourceIssue.Fields.Reporter != nil && sourceIssue.Fields.Reporter.Active {
+	if canSetReporter(sourceIssue) {
 		targetIssue.Fields.Reporter = sourceIssue.Fields.Reporter
 	}
 
 	url := s.getSourceUrl(sourceIssue)
 	created := time.Time(sourceIssue.Fields.Created)
 	targetIssue.Fields.Description = fmt.Sprintf(
-		"%s\n\n{color:red}_Original issue %s created on %s by %s_{color}",
+		"%s\n\n{color:red}_Original issue [%s|%s] created on %s by *%s*_{color}",
 		targetIssue.Fields.Description,
+		sourceIssue.Key,
 		url,
 		created,
 		sourceIssue.Fields.Reporter.DisplayName)
 
 	targetIssue.Fields.Labels = append(targetIssue.Fields.Labels, s.additionalLabels...)
 
-	if sourceIssue.Fields.Type.Name != "Epic" { //TODO Dark magic to migrate Epic with no errors
+	if canSetPriority(sourceIssue) {
+		targetIssue.Fields.Priority = &jira.Priority{Name: sourceIssue.Fields.Priority.Name}
+	}
 
-		if sourceIssue.Fields.Priority != nil {
-			targetIssue.Fields.Priority = &jira.Priority{Name: sourceIssue.Fields.Priority.Name}
-		}
-
+	if canSetCustomFields(sourceIssue) {
 		for srcCustomFieldID, srcCustomFieldValue := range sourceIssue.Fields.Unknowns {
 			if targetField, ok := s.sourceTargetCustomFieldMap[srcCustomFieldID]; ok {
 				targetIssue.Fields.Unknowns[targetField.Key] = srcCustomFieldValue
@@ -151,6 +151,24 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 	}
 
 	return targetIssue, nil
+}
+
+func canSetAssignee(sourceIssue *jira.Issue) bool {
+	return sourceIssue.Fields.Assignee != nil && sourceIssue.Fields.Assignee.Active
+}
+
+func canSetReporter(sourceIssue *jira.Issue) bool {
+	return sourceIssue.Fields.Reporter != nil && sourceIssue.Fields.Reporter.Active
+}
+
+func canSetPriority(sourceIssue *jira.Issue) bool {
+	return sourceIssue.Fields.Type.Name != "Epic" &&
+		sourceIssue.Fields.Type.Name != "Subtask" &&
+		sourceIssue.Fields.Priority != nil
+}
+
+func canSetCustomFields(sourceIssue *jira.Issue) bool {
+	return sourceIssue.Fields.Type.Name != "Epic"
 }
 
 func (s *migrator) getSourceUrl(sourceIssue *jira.Issue) string {
@@ -164,7 +182,7 @@ func (s *migrator) findTargetIssueBySummary(summary string) (*jira.Issue, error)
 
 	existingIssue, response, err := s.targetClient.Issue.
 		Search(fmt.Sprintf(`project = %s AND summary ~ "%s"`, s.projectKey, searchTerm),
-			&jira.SearchOptions{MaxResults: maxResultsPerSearch, Fields: []string{"key", "summary"}})
+			&jira.SearchOptions{MaxResults: maxResultsPerSearch, Fields: []string{"key", "summary", "description"}})
 	if err != nil {
 		return nil, parseResponseError("issueExists", response, err)
 	}
