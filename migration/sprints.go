@@ -87,7 +87,7 @@ func (s *migrator) setupTargetSprint(sourceIssue *jira.Issue, targetIssue *jira.
 		sourceSprintID := int(rawSourceSprintID.(float64))
 		targetSprint, ok := s.sourceTargetSprintMap[sourceSprintID]
 		if !ok {
-			return errors.Errorf("Target sprint '%s' not found", rawSourceFieldValue)
+			return errors.Errorf("Target sprint '%s' not found", rawSourceSprint["name"])
 		}
 
 		if response, err := s.targetClient.Sprint.MoveIssuesToSprint(targetSprint.ID, []string{targetIssue.ID}); err != nil {
