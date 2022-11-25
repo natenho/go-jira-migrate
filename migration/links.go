@@ -51,6 +51,10 @@ func (s *migrator) migrateLink(link *jira.IssueLink, sourceIssue *jira.Issue, ta
 			return err
 		}
 
+		if err := s.remoteLinkToRelatedIssue(sourceInwardIssue, targetIssue, link); err != nil {
+			return errors.Errorf("could not remote link to %s: %#v", sourceInwardIssue.Key, err)
+		}
+
 		targetInwardIssue, err = s.findTargetIssueBySummary(sourceInwardIssue.Fields.Summary)
 		if err != nil {
 			return err
@@ -64,10 +68,6 @@ func (s *migrator) migrateLink(link *jira.IssueLink, sourceIssue *jira.Issue, ta
 
 			targetInwardIssue = &jira.Issue{Key: result.TargetKey}
 		}
-
-		if err := s.remoteLinkToRelatedIssue(sourceInwardIssue, targetIssue, link); err != nil {
-			return errors.Errorf("could not remote link to %s: %#v", sourceInwardIssue.Key, err)
-		}
 	}
 
 	if link.OutwardIssue == nil {
@@ -76,6 +76,10 @@ func (s *migrator) migrateLink(link *jira.IssueLink, sourceIssue *jira.Issue, ta
 		sourceOutwardIssue, err := s.getSourceIssueByKey(link.OutwardIssue.Key)
 		if err != nil {
 			return err
+		}
+
+		if err := s.remoteLinkToRelatedIssue(sourceOutwardIssue, targetIssue, link); err != nil {
+			return errors.Errorf("could not remote link to %s: %#v", sourceOutwardIssue.Key, err)
 		}
 
 		if targetOutwardIssue == nil && sourceOutwardIssue.Fields.Resolution == nil {
@@ -91,10 +95,6 @@ func (s *migrator) migrateLink(link *jira.IssueLink, sourceIssue *jira.Issue, ta
 				}
 				targetOutwardIssue = &jira.Issue{Key: result.TargetKey}
 			}
-		}
-
-		if err := s.remoteLinkToRelatedIssue(sourceOutwardIssue, targetIssue, link); err != nil {
-			return errors.Errorf("could not remote link to %s: %#v", sourceOutwardIssue.Key, err)
 		}
 	}
 

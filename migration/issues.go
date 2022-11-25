@@ -27,6 +27,7 @@ func (s *migrator) migrateIssue(issueKey string) Result {
 
 	if sourceIssue.Fields.Project.Key != s.projectKey {
 		result.Errors = append(result.Errors, errors.Errorf("unable migrate: %s does not belong to %s", sourceIssue.Key, s.projectKey))
+		return result
 	}
 
 	result.SourceKey = sourceIssue.Key
@@ -138,7 +139,10 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 	targetIssue.Fields.Labels = append(targetIssue.Fields.Labels, s.additionalLabels...)
 
 	if sourceIssue.Fields.Type.Name != "Epic" { //TODO Dark magic to migrate Epic with no errors
-		targetIssue.Fields.Priority = &jira.Priority{Name: sourceIssue.Fields.Priority.Name}
+
+		if sourceIssue.Fields.Priority != nil {
+			targetIssue.Fields.Priority = &jira.Priority{Name: sourceIssue.Fields.Priority.Name}
+		}
 
 		for srcCustomFieldID, srcCustomFieldValue := range sourceIssue.Fields.Unknowns {
 			if targetField, ok := s.sourceTargetCustomFieldMap[srcCustomFieldID]; ok {
