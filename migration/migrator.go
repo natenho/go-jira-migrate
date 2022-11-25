@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/natenho/go-jira"
+	"github.com/natenho/go-jira-migrate/internal"
 	"github.com/pkg/errors"
 )
 
@@ -149,6 +150,8 @@ func (s *migrator) Execute(projectKey, jql string) (chan Result, error) {
 
 	s.targetBoard = targetBoard
 
+	jql = internal.SanitizeJQL(projectKey, jql)
+
 	if err := s.migrateOpenSprints(sourceBoard.ID, targetBoard.ID); err != nil {
 		close(results)
 		return results, err
@@ -158,7 +161,7 @@ func (s *migrator) Execute(projectKey, jql string) (chan Result, error) {
 		MaxResults: maxResultsPerSearch,
 		Fields:     []string{"key"}}
 
-	issues, response, err := s.sourceClient.Issue.Search(fmt.Sprintf("project = %s AND %s", projectKey, jql), options)
+	issues, response, err := s.sourceClient.Issue.Search(jql, options)
 	if err != nil {
 		close(results)
 		return results, err

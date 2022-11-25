@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/natenho/go-jira"
+	"github.com/natenho/go-jira-migrate/internal"
 	"github.com/pkg/errors"
 	"github.com/trivago/tgo/tcontainer"
 )
@@ -26,6 +27,7 @@ func (s *migrator) migrateIssue(issueKey string) Result {
 	}
 
 	if sourceIssue.Fields.Project.Key != s.projectKey {
+		result.Errors = append(result.Errors, errors.Errorf("issue %s does not belong to %s", sourceIssue.Key, s.projectKey))
 		return result
 	}
 
@@ -178,37 +180,22 @@ func (s *migrator) getSourceUrl(sourceIssue *jira.Issue) string {
 }
 
 func (s *migrator) findTargetIssueBySummary(summary string) (*jira.Issue, error) {
-	searchTerm := sanitizeForJQL(summary)
+	searchTerm := internal.SanitizeTermForJQL(summary)
 
-	existingIssue, response, err := s.targetClient.Issue.
+	searchResult, response, err := s.targetClient.Issue.
 		Search(fmt.Sprintf(`project = %s AND summary ~ "%s"`, s.projectKey, searchTerm),
-			&jira.SearchOptions{MaxResults: maxResultsPerSearch, Fields: []string{"key", "summary", "description"}})
+			&jira.SearchOptions{MaxResults: maxResultsPerSearch, Fields: []string{"key", "summary"}})
 	if err != nil {
 		return nil, parseResponseError("issueExists", response, err)
 	}
 
 	defer response.Body.Close()
 
-	if len(existingIssue) > 0 && strings.EqualFold(existingIssue[0].Fields.Summary, summary) {
-		return &existingIssue[0], nil
+	for _, existingIssue := range searchResult {
+		if strings.EqualFold(existingIssue.Fields.Summary, summary) {
+			return &existingIssue, nil
+		}
 	}
 
 	return nil, nil
-}
-
-func sanitizeForJQL(input string) string {
-	input = strings.ReplaceAll(input, " - ", " ")
-	input = strings.ReplaceAll(input, "- ", " ")
-	input = strings.ReplaceAll(input, " -", " ")
-
-	const notAllowedSearchChars string = `["](/\)?`
-
-	filter := func(r rune) rune {
-		if strings.ContainsRune(notAllowedSearchChars, r) {
-			return ' '
-		}
-		return r
-	}
-
-	return strings.Map(filter, input)
 }
