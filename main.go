@@ -14,8 +14,8 @@ func main() {
 	var targetUrl = flag.String("t", "", "Target JIRA URL (e.g. https://your-target-domain.atlassian.net/)")
 	var user = flag.String("u", "", "User")
 	var apiKey = flag.String("k", "", "API Key (to create one, visit https://tinyurl.com/jira-api-token/)")
-	var projectKey = flag.String("p", "", "Project Key")
-	var jql = flag.String("q", "", "JQL query returning issues to be migrated from the selected project")
+	var projectKey = flag.String("p", "", "Project Key (e.g. MYPROJ)")
+	var jql = flag.String("q", "", "JQL query returning issues to be migrated from the selected project (e.g. \"status != Done\" to migrate only pending issues)")
 	var workers = flag.Int("w", defaultWorkerPoolSize, "How many migrations should occur in parallel")
 
 	flag.Parse()
