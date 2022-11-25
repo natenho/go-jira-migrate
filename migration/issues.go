@@ -50,7 +50,7 @@ func (s *migrator) migrateIssue(issueKey string) Result {
 		return result
 	}
 
-	if err := s.setupTargetEpic(sourceIssue, targetIssue); err != nil {
+	if err := s.migrateParent(sourceIssue, targetIssue); err != nil {
 		result.Errors = append(result.Errors, err)
 		return result
 	}

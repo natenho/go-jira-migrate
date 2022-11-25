@@ -2,7 +2,7 @@ package migration
 
 import "github.com/natenho/go-jira"
 
-func (s *migrator) setupTargetEpic(sourceIssue *jira.Issue, targetIssue *jira.Issue) error {
+func (s *migrator) migrateParent(sourceIssue *jira.Issue, targetIssue *jira.Issue) error {
 	if sourceIssue.Fields.Parent == nil {
 		return nil
 	}
