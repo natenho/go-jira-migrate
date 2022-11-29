@@ -26,8 +26,8 @@ func (s *migrator) migrateIssue(issueKey string) Result {
 		return result
 	}
 
-	if sourceIssue.Fields.Project.Key != s.projectKey {
-		result.Errors = append(result.Errors, errors.Errorf("issue %s does not belong to %s", sourceIssue.Key, s.projectKey))
+	if sourceIssue.Fields.Project.Key != s.sourceProjectKey {
+		result.Errors = append(result.Errors, errors.Errorf("issue %s does not belong to %s", sourceIssue.Key, s.sourceProjectKey))
 		return result
 	}
 
@@ -112,7 +112,7 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 		Key: sourceIssue.Key,
 		Fields: &jira.IssueFields{
 			Type:        jira.IssueType{Name: sourceIssue.Fields.Type.Name},
-			Project:     jira.Project{Key: sourceIssue.Fields.Project.Key},
+			Project:     jira.Project{Key: s.targetProjectKey},
 			Description: sourceIssue.Fields.Description,
 			Summary:     sourceIssue.Fields.Summary,
 			Labels:      sourceIssue.Fields.Labels,
@@ -183,7 +183,7 @@ func (s *migrator) findTargetIssueBySummary(summary string) (*jira.Issue, error)
 	searchTerm := internal.SanitizeTermForJQL(summary)
 
 	searchResult, response, err := s.targetClient.Issue.
-		Search(fmt.Sprintf(`project = %s AND summary ~ "%s"`, s.projectKey, searchTerm),
+		Search(fmt.Sprintf(`project = %s AND summary ~ "%s"`, s.targetProjectKey, searchTerm),
 			&jira.SearchOptions{MaxResults: maxResultsPerSearch, Fields: []string{"key", "summary"}})
 	if err != nil {
 		return nil, parseResponseError("issueExists", response, err)

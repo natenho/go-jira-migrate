@@ -31,7 +31,7 @@ func (r Result) HasTargetIssue() bool {
 }
 
 type Migrator interface {
-	Execute(projectKey, jql string) (chan Result, error)
+	Execute(jql string) (chan Result, error)
 }
 
 type migrator struct {
@@ -41,7 +41,9 @@ type migrator struct {
 	sourceClient *jira.Client
 	targetClient *jira.Client
 
-	projectKey                 string
+	sourceProjectKey string
+	targetProjectKey string
+
 	sourceTargetCustomFieldMap map[string]jira.Field
 	targetBoard                *jira.Board
 	sourceTargetSprintMap      map[int]*jira.Sprint
@@ -56,13 +58,13 @@ type migrator struct {
 
 type Option func(m *migrator)
 
-func WithAdditionalLabel(label string) Option {
+func WithAdditionalLabels(labels ...string) Option {
 	return func(m *migrator) {
-		if label == "" {
-			return
+		for _, label := range labels {
+			if label != "" {
+				m.additionalLabels = append(m.additionalLabels, label)
+			}
 		}
-
-		m.additionalLabels = append(m.additionalLabels, label)
 	}
 }
 
@@ -82,7 +84,7 @@ func WithCustomFields(customFieldNames ...string) Option {
 	}
 }
 
-func NewMigrator(sourceUrl, targetUrl, user, apiToken string, options ...Option) (Migrator, error) {
+func NewMigrator(sourceUrl, targetUrl, user, apiToken, sourceProjectKey, targetProjectKey string, options ...Option) (Migrator, error) {
 	if _, err := url.Parse(sourceUrl); err != nil || sourceUrl == "" {
 		return nil, errors.New("Invalid source url")
 	}
@@ -114,6 +116,8 @@ func NewMigrator(sourceUrl, targetUrl, user, apiToken string, options ...Option)
 	m := &migrator{
 		sourceClient:               sourceClient,
 		targetClient:               targetClient,
+		sourceProjectKey:           sourceProjectKey,
+		targetProjectKey:           targetProjectKey,
 		sourceTargetSprintMap:      map[int]*jira.Sprint{},
 		sourceTargetCustomFieldMap: map[string]jira.Field{},
 		syncRoot:                   sync.Map{},
@@ -126,9 +130,7 @@ func NewMigrator(sourceUrl, targetUrl, user, apiToken string, options ...Option)
 	return m, nil
 }
 
-func (s *migrator) Execute(projectKey, jql string) (chan Result, error) {
-	s.projectKey = projectKey
-
+func (s *migrator) Execute(jql string) (chan Result, error) {
 	results := make(chan Result)
 
 	if err := s.mapCustomFields(); err != nil {
@@ -136,13 +138,13 @@ func (s *migrator) Execute(projectKey, jql string) (chan Result, error) {
 		return results, err
 	}
 
-	sourceBoard, err := getBoard(s.sourceClient, projectKey)
+	sourceBoard, err := getBoard(s.sourceClient, s.sourceProjectKey)
 	if err != nil {
 		close(results)
 		return results, err
 	}
 
-	targetBoard, err := getBoard(s.targetClient, projectKey)
+	targetBoard, err := getBoard(s.targetClient, s.targetProjectKey)
 	if err != nil {
 		close(results)
 		return results, err
@@ -150,7 +152,7 @@ func (s *migrator) Execute(projectKey, jql string) (chan Result, error) {
 
 	s.targetBoard = targetBoard
 
-	jql = internal.SanitizeJQL(projectKey, jql)
+	jql = internal.SanitizeJQL(s.sourceProjectKey, jql)
 
 	if err := s.migrateOpenSprints(sourceBoard.ID, targetBoard.ID); err != nil {
 		close(results)
