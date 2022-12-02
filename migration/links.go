@@ -31,7 +31,7 @@ func (s *migrator) migrateLinks(sourceIssue, targetIssue *jira.Issue) chan error
 	for _, item := range sourceIssue.Fields.IssueLinks {
 		wg.Add(1)
 		go func(item *jira.IssueLink) {
-			errChan <- s.migrateLink(item, sourceIssue, targetIssue)
+			errChan <- s.migrateLink(item, targetIssue)
 			wg.Done()
 		}(item)
 	}
@@ -40,7 +40,7 @@ func (s *migrator) migrateLinks(sourceIssue, targetIssue *jira.Issue) chan error
 	return errChan
 }
 
-func (s *migrator) migrateLink(link *jira.IssueLink, sourceIssue *jira.Issue, targetIssue *jira.Issue) error {
+func (s *migrator) migrateLink(link *jira.IssueLink, targetIssue *jira.Issue) error {
 	var targetInwardIssue, targetOutwardIssue *jira.Issue
 
 	if link.InwardIssue == nil {
@@ -102,12 +102,12 @@ func (s *migrator) migrateLink(link *jira.IssueLink, sourceIssue *jira.Issue, ta
 		return nil
 	}
 
-	response, err := s.targetClient.Issue.AddLink(
-		&jira.IssueLink{
-			Type:         jira.IssueLinkType{Name: link.Type.Name},
-			InwardIssue:  targetInwardIssue,
-			OutwardIssue: targetOutwardIssue,
-		})
+	targetLink := &jira.IssueLink{
+		Type:         jira.IssueLinkType{Name: link.Type.Name},
+		InwardIssue:  &jira.Issue{Key: targetInwardIssue.Key},
+		OutwardIssue: &jira.Issue{Key: targetOutwardIssue.Key},
+	}
+	response, err := s.targetClient.Issue.AddLink(targetLink)
 	if err != nil {
 		return parseResponseError("AddLink", response, err)
 	}
