@@ -147,6 +147,9 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 	if canSetCustomFields(sourceIssue) {
 		for srcCustomFieldID, srcCustomFieldValue := range sourceIssue.Fields.Unknowns {
 			if targetField, ok := s.sourceTargetCustomFieldMap[srcCustomFieldID]; ok {
+				if targetField.Name == "Flagged" && srcCustomFieldValue != nil { //TODO Get rid of this dark magic
+					srcCustomFieldValue = []interface{}{map[string]interface{}{"value": "Impediment"}}
+				}
 				targetIssue.Fields.Unknowns[targetField.Key] = srcCustomFieldValue
 			}
 		}

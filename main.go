@@ -43,6 +43,7 @@ func main() {
 	var customFields flagStringArray
 	flag.Var(&customFields, "cf", "Custom fields to read from source project (includes 'Story point estimate' by default)")
 	customFields = append(customFields, "Story point estimate")
+	customFields = append(customFields, "Flagged")
 
 	var additionalLabels flagStringArray
 	flag.Var(&additionalLabels, "al", "Additional labels to assign to migrated issues (includes 'MIGRATED' label) by default")
