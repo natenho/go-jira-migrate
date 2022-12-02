@@ -120,11 +120,11 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 		},
 	}
 
-	if canSetAssignee(sourceIssue) {
+	if s.canSetAssignee(sourceIssue) {
 		targetIssue.Fields.Assignee = sourceIssue.Fields.Assignee
 	}
 
-	if canSetReporter(sourceIssue) {
+	if s.canSetReporter(sourceIssue) {
 		targetIssue.Fields.Reporter = sourceIssue.Fields.Reporter
 	}
 
@@ -158,12 +158,20 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 	return targetIssue, nil
 }
 
-func canSetAssignee(sourceIssue *jira.Issue) bool {
-	return sourceIssue.Fields.Assignee != nil && sourceIssue.Fields.Assignee.Active
+func (s *migrator) canSetAssignee(sourceIssue *jira.Issue) bool {
+	if sourceIssue.Fields.Assignee == nil {
+		return false
+	}
+	reporter, _, _ := s.targetClient.User.GetByAccountID(sourceIssue.Fields.Assignee.AccountID)
+	return reporter != nil && reporter.Active
 }
 
-func canSetReporter(sourceIssue *jira.Issue) bool {
-	return sourceIssue.Fields.Reporter != nil && sourceIssue.Fields.Reporter.Active
+func (s *migrator) canSetReporter(sourceIssue *jira.Issue) bool {
+	if sourceIssue.Fields.Reporter == nil {
+		return false
+	}
+	reporter, _, _ := s.targetClient.User.GetByAccountID(sourceIssue.Fields.Reporter.AccountID)
+	return reporter != nil && reporter.Active
 }
 
 func canSetPriority(sourceIssue *jira.Issue) bool {
