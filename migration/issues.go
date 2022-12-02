@@ -131,12 +131,12 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 	url := s.getSourceUrl(sourceIssue)
 	created := time.Time(sourceIssue.Fields.Created)
 	targetIssue.Fields.Description = fmt.Sprintf(
-		"%s\n\n{color:red}_Original issue [%s|%s] created on %s by *%s*_{color}",
+		"%s\n\n{color:red}_Original issue [%s|%s] created on %s by [~accountid:%s]_{color}",
 		targetIssue.Fields.Description,
 		sourceIssue.Key,
 		url,
 		created,
-		sourceIssue.Fields.Reporter.DisplayName)
+		sourceIssue.Fields.Reporter.AccountID)
 
 	targetIssue.Fields.Labels = append(targetIssue.Fields.Labels, s.additionalLabels...)
 
