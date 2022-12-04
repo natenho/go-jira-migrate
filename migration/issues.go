@@ -140,18 +140,33 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 
 	targetIssue.Fields.Labels = append(targetIssue.Fields.Labels, s.additionalLabels...)
 
-	if canSetPriority(sourceIssue) {
+	if s.canMigrateField(sourceIssue.Fields.Type.Name, "priority") {
 		targetIssue.Fields.Priority = &jira.Priority{Name: sourceIssue.Fields.Priority.Name}
 	}
 
-	if canSetCustomFields(sourceIssue) {
-		for srcCustomFieldID, srcCustomFieldValue := range sourceIssue.Fields.Unknowns {
-			if targetField, ok := s.sourceTargetCustomFieldMap[srcCustomFieldID]; ok {
-				if targetField.Name == "Flagged" && srcCustomFieldValue != nil { //TODO Get rid of this dark magic
-					srcCustomFieldValue = []interface{}{map[string]interface{}{"value": "Impediment"}}
-				}
-				targetIssue.Fields.Unknowns[targetField.Key] = srcCustomFieldValue
+	for _, targetField := range s.targetFieldPerIssueType[targetIssue.Fields.Type.Name] {
+		sourceFieldKeys := s.getSourceFieldsFromTargetFieldKey(targetField.Key)
+
+		if len(sourceFieldKeys) == 0 {
+			continue
+		}
+
+		for _, sourceFieldKey := range sourceFieldKeys {
+
+			fieldValue, ok := sourceIssue.Fields.Unknowns[sourceFieldKey].(map[string]interface{})
+			if ok {
+				delete(fieldValue, "id")
+				delete(fieldValue, "self")
+				targetIssue.Fields.Unknowns[targetField.Key] = fieldValue
+				continue
 			}
+
+			if targetField.Name == "Flagged" && sourceIssue.Fields.Unknowns[sourceFieldKey] != nil { //TODO Get rid of this dark magic
+				targetIssue.Fields.Unknowns[targetField.Key] = []interface{}{map[string]interface{}{"value": "Impediment"}}
+				continue
+			}
+
+			targetIssue.Fields.Unknowns[targetField.Key] = sourceIssue.Fields.Unknowns[sourceFieldKey]
 		}
 	}
 
@@ -162,7 +177,7 @@ func (s *migrator) canSetAssignee(sourceIssue *jira.Issue) bool {
 	if sourceIssue.Fields.Assignee == nil {
 		return false
 	}
-	reporter, _, _ := s.targetClient.User.GetByAccountID(sourceIssue.Fields.Assignee.AccountID)
+	reporter, _, _ := s.targetClient.User.GetByAccountID(sourceIssue.Fields.Assignee.AccountID) //TODO Could be cached for optimization
 	return reporter != nil && reporter.Active
 }
 
@@ -170,18 +185,8 @@ func (s *migrator) canSetReporter(sourceIssue *jira.Issue) bool {
 	if sourceIssue.Fields.Reporter == nil {
 		return false
 	}
-	reporter, _, _ := s.targetClient.User.GetByAccountID(sourceIssue.Fields.Reporter.AccountID)
+	reporter, _, _ := s.targetClient.User.GetByAccountID(sourceIssue.Fields.Reporter.AccountID) //TODO Could be cached for optimization
 	return reporter != nil && reporter.Active
-}
-
-func canSetPriority(sourceIssue *jira.Issue) bool {
-	return sourceIssue.Fields.Type.Name != "Epic" &&
-		sourceIssue.Fields.Type.Name != "Subtask" &&
-		sourceIssue.Fields.Priority != nil
-}
-
-func canSetCustomFields(sourceIssue *jira.Issue) bool {
-	return sourceIssue.Fields.Type.Name != "Epic"
 }
 
 func (s *migrator) getSourceUrl(sourceIssue *jira.Issue) string {

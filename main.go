@@ -41,8 +41,9 @@ func main() {
 	var workers = flag.Int("w", defaultWorkerPoolSize, "How many migrations should occur in parallel")
 
 	var customFields flagStringArray
-	flag.Var(&customFields, "cf", "Custom fields to read from source project (includes 'Story point estimate' by default)")
+	flag.Var(&customFields, "cf", "Custom fields to read from source project (includes 'Story point estimate' and 'Flagged' by default)")
 	customFields = append(customFields, "Story point estimate")
+	customFields = append(customFields, "Story Points")
 	customFields = append(customFields, "Flagged")
 
 	var additionalLabels flagStringArray

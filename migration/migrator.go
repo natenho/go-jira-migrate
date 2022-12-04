@@ -44,12 +44,12 @@ type migrator struct {
 	sourceProjectKey string
 	targetProjectKey string
 
-	sourceTargetCustomFieldMap map[string]jira.Field
-	targetBoard                *jira.Board
-	sourceTargetSprintMap      map[int]*jira.Sprint
+	sourceTargetCustomFieldMap map[string][]jira.Field
+	sourceFieldPerIssueType    map[string][]jira.Field
+	targetFieldPerIssueType    map[string][]jira.Field
 
-	sourceFields []jira.Field
-	targetFields []jira.Field
+	targetBoard           *jira.Board
+	sourceTargetSprintMap map[int]*jira.Sprint
 
 	syncRoot sync.Map
 
@@ -119,7 +119,8 @@ func NewMigrator(sourceUrl, targetUrl, user, apiToken, sourceProjectKey, targetP
 		sourceProjectKey:           sourceProjectKey,
 		targetProjectKey:           targetProjectKey,
 		sourceTargetSprintMap:      map[int]*jira.Sprint{},
-		sourceTargetCustomFieldMap: map[string]jira.Field{},
+		targetFieldPerIssueType:    map[string][]jira.Field{},
+		sourceTargetCustomFieldMap: map[string][]jira.Field{},
 		syncRoot:                   sync.Map{},
 	}
 
@@ -133,7 +134,7 @@ func NewMigrator(sourceUrl, targetUrl, user, apiToken, sourceProjectKey, targetP
 func (s *migrator) Execute(jql string) (chan Result, error) {
 	results := make(chan Result)
 
-	if err := s.mapCustomFields(); err != nil {
+	if err := s.discoverFields(); err != nil {
 		close(results)
 		return results, err
 	}
