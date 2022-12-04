@@ -77,34 +77,45 @@ func (s *migrator) setupTargetSprint(sourceIssue *jira.Issue, targetIssue *jira.
 		return nil
 	}
 
-	rawSourceSprint, ok := rawSourceFieldValue[0].(map[string]interface{})
-	if ok {
-		rawSourceSprintID, ok := rawSourceSprint["id"]
+	var openSourceSprint map[string]interface{}
+
+	for _, rawSourceSprint := range rawSourceFieldValue {
+		sourceSprint, ok := rawSourceSprint.(map[string]interface{})
 		if !ok {
-			return errors.Errorf("Source sprint ID could not be parsed")
+			return errors.Errorf("Could not parse source sprint")
 		}
 
-		sourceSprintID := int(rawSourceSprintID.(float64))
-		targetSprint, ok := s.sourceTargetSprintMap[sourceSprintID]
-		if !ok {
-			return errors.Errorf("Target sprint '%s' not found", rawSourceSprint["name"])
+		if sourceSprint["state"] == "future" {
+			openSourceSprint = sourceSprint
+			break
 		}
+	}
 
-		if response, err := s.targetClient.Sprint.MoveIssuesToSprint(targetSprint.ID, []string{targetIssue.ID}); err != nil {
-			return parseResponseError("MoveIssuesToSprint", response, err)
-		}
+	rawSourceSprintID, ok := openSourceSprint["id"]
+	if !ok {
+		return errors.Errorf("Source sprint ID could not be parsed")
+	}
+
+	sourceSprintID := int(rawSourceSprintID.(float64))
+	targetSprint, ok := s.sourceTargetSprintMap[sourceSprintID]
+	if !ok {
+		return errors.Errorf("Target sprint '%s' not found", openSourceSprint["name"])
+	}
+
+	if response, err := s.targetClient.Sprint.MoveIssuesToSprint(targetSprint.ID, []string{targetIssue.ID}); err != nil {
+		return parseResponseError("MoveIssuesToSprint", response, err)
 	}
 
 	return nil
 }
 
 func (s *migrator) getSourceFieldValue(sourceIssue *jira.Issue, fieldName string) any {
-	field, ok := internal.SliceFind(s.sourceFields, func(field jira.Field) bool {
+	field, ok := internal.SliceFind(s.sourceFieldPerIssueType[sourceIssue.Fields.Type.Name], func(field jira.Field) bool {
 		return field.Name == fieldName
 	})
 
 	if ok {
-		return sourceIssue.Fields.Unknowns[field.ID]
+		return sourceIssue.Fields.Unknowns[field.Key]
 	}
 
 	return nil
