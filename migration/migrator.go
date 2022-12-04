@@ -215,11 +215,7 @@ func getBoard(client *jira.Client, projectKey string) (*jira.Board, error) {
 		return nil, parseResponseError("GetAllBoards", response, err)
 	}
 
-	if len(boards.Values) > 1 {
-		return nil, errors.Errorf("Ops, migration of multiple boards is not implemented yet (%d boards found for %s)", len(boards.Values), projectKey)
-	}
-
-	return &boards.Values[0], nil
+	return &boards.Values[0], nil //TODO Support multiple board migration
 }
 
 func (s *migrator) worker(id int, issueKeys <-chan string, results chan<- Result, wg *sync.WaitGroup) {
