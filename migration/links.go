@@ -9,14 +9,18 @@ import (
 )
 
 func (s *migrator) linkToOriginalIssue(sourceIssue, targetIssue *jira.Issue) error {
-	url := s.getSourceUrl(sourceIssue)
-	_, response, err := s.targetClient.Issue.AddRemoteLink(targetIssue.ID,
+	return s.linkRemoteIssue(sourceIssue, targetIssue, "Original Issue - ")
+}
+
+func (s *migrator) linkRemoteIssue(remoteIssue, targetIssue *jira.Issue, prefix string) error {
+	url := s.getSourceUrl(remoteIssue)
+	_, response, err := s.targetClient.Issue.AddRemoteLink(targetIssue.Key,
 		&jira.RemoteLink{Object: &jira.RemoteLinkObject{
 			URL:   url,
-			Title: fmt.Sprintf("Original Issue - %s", url),
+			Title: fmt.Sprintf("%s%s", prefix, url),
 		}})
 	if err != nil {
-		return parseResponseError("linkToOriginalIssue", response, err)
+		return parseResponseError("linkRemoteIssue", response, err)
 	}
 
 	return nil
@@ -60,7 +64,7 @@ func (s *migrator) migrateLink(link *jira.IssueLink, targetIssue *jira.Issue) er
 			return err
 		}
 
-		if targetInwardIssue == nil && sourceInwardIssue.Fields.Resolution == nil {
+		if targetInwardIssue == nil && s.canMigrateLinkedIssue(sourceInwardIssue) {
 			result := s.migrateIssue(sourceInwardIssue.Key)
 			if !result.HasTargetIssue() {
 				return errors.Errorf("could not create link: %s could not be created on target: %#v", sourceInwardIssue.Key, result.Errors)
@@ -82,7 +86,7 @@ func (s *migrator) migrateLink(link *jira.IssueLink, targetIssue *jira.Issue) er
 			return errors.Errorf("could not remote link to %s: %#v", sourceOutwardIssue.Key, err)
 		}
 
-		if targetOutwardIssue == nil && sourceOutwardIssue.Fields.Resolution == nil {
+		if targetOutwardIssue == nil && s.canMigrateLinkedIssue(sourceOutwardIssue) {
 			targetOutwardIssue, err = s.findTargetIssueBySummary(sourceOutwardIssue.Fields.Summary)
 			if err != nil {
 				return err
@@ -102,6 +106,10 @@ func (s *migrator) migrateLink(link *jira.IssueLink, targetIssue *jira.Issue) er
 		return nil
 	}
 
+	if targetInwardIssue.Key == targetOutwardIssue.Key {
+		return nil
+	}
+
 	targetLink := &jira.IssueLink{
 		Type:         jira.IssueLinkType{Name: link.Type.Name},
 		InwardIssue:  &jira.Issue{Key: targetInwardIssue.Key},
@@ -115,16 +123,21 @@ func (s *migrator) migrateLink(link *jira.IssueLink, targetIssue *jira.Issue) er
 	return nil
 }
 
+func (s *migrator) canMigrateLinkedIssue(linkedIssue *jira.Issue) bool {
+	return linkedIssue.Fields.Resolution == nil &&
+		linkedIssue.Fields.Project.Key == s.sourceProjectKey
+}
+
 func (s *migrator) remoteLinkToRelatedIssue(relatedIssue *jira.Issue, targetIssue *jira.Issue, link *jira.IssueLink) error {
 	url := s.getSourceUrl(relatedIssue)
 
 	var linkType string
 
-	if link.InwardIssue == nil {
+	if link.InwardIssue == nil && link.OutwardIssue == nil {
 		return nil
 	}
 
-	if link.InwardIssue.Key == targetIssue.Key {
+	if link.InwardIssue == nil || link.InwardIssue.Key == targetIssue.Key {
 		linkType = link.Type.Outward
 	} else {
 		linkType = link.Type.Inward

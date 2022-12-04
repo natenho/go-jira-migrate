@@ -13,6 +13,10 @@ func (s *migrator) migrateParent(sourceIssue *jira.Issue, targetIssue *jira.Issu
 	}
 	defer response.Body.Close()
 
+	if parentIssue.Fields.Project.Key != s.sourceProjectKey {
+		return nil
+	}
+
 	parentIssueMigrateResult := s.migrateIssue(parentIssue.Key)
 	if !parentIssueMigrateResult.HasTargetIssue() {
 		return parentIssueMigrateResult.Errors[0]
