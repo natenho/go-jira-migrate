@@ -54,6 +54,7 @@ type migrator struct {
 	syncRoot sync.Map
 
 	workerPoolSize int
+	importSprints  bool
 }
 
 type Option func(m *migrator)
@@ -81,6 +82,12 @@ func WithWorkerPoolSize(size int) Option {
 func WithCustomFields(customFieldNames ...string) Option {
 	return func(m *migrator) {
 		m.customFields = customFieldNames
+	}
+}
+
+func WithSprints(value bool) Option {
+	return func(m *migrator) {
+		m.importSprints = value
 	}
 }
 

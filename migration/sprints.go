@@ -38,6 +38,10 @@ func getOpenSprints(client *jira.Client, boardID int) ([]jira.Sprint, error) {
 }
 
 func (s *migrator) migrateOpenSprints(sourceBoardID, targetBoardID int) error {
+	if !s.importSprints {
+		return nil
+	}
+
 	sourceSprints, err := getOpenSprints(s.sourceClient, sourceBoardID)
 	if err != nil {
 		return err
@@ -72,7 +76,7 @@ func (s *migrator) migrateOpenSprints(sourceBoardID, targetBoardID int) error {
 }
 
 func (s *migrator) setupTargetSprint(sourceIssue *jira.Issue, targetIssue *jira.Issue) error {
-	rawSourceFieldValue, ok := s.getSourceFieldValue(sourceIssue, "Sprint").([]interface{})
+	rawSourceFieldValue, ok := s.getCustomFieldValue(sourceIssue, "Sprint").([]interface{})
 	if !ok || len(rawSourceFieldValue) == 0 {
 		return nil
 	}
@@ -104,18 +108,6 @@ func (s *migrator) setupTargetSprint(sourceIssue *jira.Issue, targetIssue *jira.
 
 	if response, err := s.targetClient.Sprint.MoveIssuesToSprint(targetSprint.ID, []string{targetIssue.ID}); err != nil {
 		return parseResponseError("MoveIssuesToSprint", response, err)
-	}
-
-	return nil
-}
-
-func (s *migrator) getSourceFieldValue(sourceIssue *jira.Issue, fieldName string) any {
-	field, ok := internal.SliceFind(s.sourceFieldPerIssueType[sourceIssue.Fields.Type.Name], func(field jira.Field) bool {
-		return field.Name == fieldName
-	})
-
-	if ok {
-		return sourceIssue.Fields.Unknowns[field.Key]
 	}
 
 	return nil

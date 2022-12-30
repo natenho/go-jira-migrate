@@ -177,16 +177,16 @@ func (s *migrator) canSetAssignee(sourceIssue *jira.Issue) bool {
 	if sourceIssue.Fields.Assignee == nil {
 		return false
 	}
-	reporter, _, _ := s.targetClient.User.GetByAccountID(sourceIssue.Fields.Assignee.AccountID) //TODO Could be cached for optimization
-	return reporter != nil && reporter.Active
+	user, _, _ := s.targetClient.User.GetByAccountID(sourceIssue.Fields.Assignee.AccountID) //TODO Could be cached for optimization
+	return user != nil && user.Active
 }
 
 func (s *migrator) canSetReporter(sourceIssue *jira.Issue) bool {
 	if sourceIssue.Fields.Reporter == nil {
 		return false
 	}
-	reporter, _, _ := s.targetClient.User.GetByAccountID(sourceIssue.Fields.Reporter.AccountID) //TODO Could be cached for optimization
-	return reporter != nil && reporter.Active
+	user, _, _ := s.targetClient.User.GetByAccountID(sourceIssue.Fields.Reporter.AccountID) //TODO Could be cached for optimization
+	return user != nil && user.Active
 }
 
 func (s *migrator) getSourceUrl(sourceIssue *jira.Issue) string {

@@ -39,6 +39,7 @@ func main() {
 	var targetProjectKey = flag.String("tp", "", "Target project key (e.g. OTHER)")
 	var jql = flag.String("q", "", "JQL query returning issues to be migrated from the selected project (e.g. \"status != Done\" to migrate only pending issues)")
 	var workers = flag.Int("w", defaultWorkerPoolSize, "How many migrations should occur in parallel")
+	var importSprints = flag.Bool("sprints", true, "Define if sprints will be imported, useful for projects that do not have sprints")
 
 	var customFields flagStringArray
 	flag.Var(&customFields, "cf", "Custom fields to read from source project (includes 'Story point estimate' and 'Flagged' by default)")
@@ -79,7 +80,8 @@ func main() {
 		*targetProjectKey,
 		migration.WithWorkerPoolSize(*workers),
 		migration.WithAdditionalLabels(additionalLabels...),
-		migration.WithCustomFields(customFields...))
+		migration.WithCustomFields(customFields...),
+		migration.WithSprints(*importSprints))
 	if err != nil {
 		log.Println(err)
 		return

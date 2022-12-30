@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/natenho/go-jira"
+	"github.com/natenho/go-jira-migrate/internal"
 	"golang.org/x/exp/slices"
 )
 
@@ -119,4 +120,16 @@ func (s *migrator) getSourceFieldsFromTargetFieldKey(targetFieldKey string) []st
 	}
 
 	return sourceFieldKeys
+}
+
+func (s *migrator) getCustomFieldValue(issue *jira.Issue, fieldName string) any {
+	field, ok := internal.SliceFind(s.sourceFieldPerIssueType[issue.Fields.Type.Name], func(field jira.Field) bool {
+		return field.Name == fieldName
+	})
+
+	if ok {
+		return issue.Fields.Unknowns[field.Key]
+	}
+
+	return nil
 }
