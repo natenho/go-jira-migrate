@@ -31,24 +31,24 @@ func (f *flagStringArray) Set(value string) error {
 }
 
 func main() {
-	var sourceUrl = flag.String("s", "", "Source JIRA URL (e.g. https://your-source-domain.atlassian.net/)")
-	var targetUrl = flag.String("t", "", "Target JIRA URL (e.g. https://your-target-domain.atlassian.net/)")
-	var user = flag.String("u", "", "User")
-	var apiKey = flag.String("k", "", "API Key (to create one, visit https://tinyurl.com/jira-api-token/)")
-	var sourceProjectKey = flag.String("sp", "", "Source project key (e.g. MYPROJ)")
-	var targetProjectKey = flag.String("tp", "", "Target project key (e.g. OTHER)")
-	var jql = flag.String("q", "", "JQL query returning issues to be migrated from the selected project (e.g. \"status != Done\" to migrate only pending issues)")
-	var workers = flag.Int("w", defaultWorkerPoolSize, "How many migrations should occur in parallel")
-	var importSprints = flag.Bool("sprints", true, "Define if sprints will be imported, useful for projects that do not have sprints")
+	var sourceUrl = flag.String("source", "", "Source JIRA URL (e.g. https://your-source-domain.atlassian.net/)")
+	var targetUrl = flag.String("target", "", "Target JIRA URL (e.g. https://your-target-domain.atlassian.net/)")
+	var user = flag.String("user", "", "User")
+	var apiKey = flag.String("api-key", "", "API Key (to create one, visit https://tinyurl.com/jira-api-token/)")
+	var sourceProjectKey = flag.String("source-project", "", "Source project key (e.g. MYPROJ)")
+	var targetProjectKey = flag.String("target-project", "", "Target project key (e.g. OTHER)")
+	var jql = flag.String("query", "Status != Done", "JQL query returning issues to be migrated from the selected project (e.g. \"status != Done\" to migrate only pending issues)")
+	var workers = flag.Int("workers", defaultWorkerPoolSize, "How many migrations should occur in parallel")
+	var importSprints = flag.Bool("sprints", true, "Define if sprints will be imported")
 
 	var customFields flagStringArray
-	flag.Var(&customFields, "cf", "Custom fields to read from source project (includes 'Story point estimate' and 'Flagged' by default)")
+	flag.Var(&customFields, "field", "Custom fields to read from source project (includes 'Story point estimate' and 'Flagged' by default)")
 	customFields = append(customFields, "Story point estimate")
 	customFields = append(customFields, "Story Points")
 	customFields = append(customFields, "Flagged")
 
 	var additionalLabels flagStringArray
-	flag.Var(&additionalLabels, "al", "Additional labels to assign to migrated issues (includes 'MIGRATED' label) by default")
+	flag.Var(&additionalLabels, "label", "Additional labels to assign to migrated issues (includes 'MIGRATED' label) by default")
 	additionalLabels = append(additionalLabels, "MIGRATED")
 
 	flag.Parse()
