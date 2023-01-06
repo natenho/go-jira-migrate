@@ -94,6 +94,12 @@ func (s *migrator) migrateIssue(issueKey string) Result {
 		}
 	}
 
+	for err := range s.migrateStatus(sourceIssue, createdIssue) {
+		if err != nil {
+			result.Errors = append(result.Errors, err)
+		}
+	}
+
 	return result
 }
 
