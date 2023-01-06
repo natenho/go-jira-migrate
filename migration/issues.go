@@ -34,7 +34,7 @@ func (s *migrator) migrateIssue(issueKey string) Result {
 	result.SourceKey = sourceIssue.Key
 	result.SourceSummary = sourceIssue.Fields.Summary
 
-	existingIssue, err := s.findTargetIssueBySummary(sourceIssue.Fields.Summary)
+	existingIssue, err := s.findTargetIssueBySummaryAndDescription(sourceIssue.Fields.Summary, sourceIssue.Key)
 	if err != nil {
 		result.Errors = append(result.Errors, err)
 		return result
@@ -201,11 +201,18 @@ func (s *migrator) getSourceUrl(sourceIssue *jira.Issue) string {
 	return url
 }
 
-func (s *migrator) findTargetIssueBySummary(summary string) (*jira.Issue, error) {
-	searchTerm := internal.SanitizeTermForJQL(summary)
+func (s *migrator) findTargetIssueBySummaryAndDescription(summary string, descriptionKeywords ...string) (*jira.Issue, error) {
+	summaryTerm := internal.SanitizeTermForJQL(summary)
+
+	descriptionTerms := ""
+	if len(descriptionKeywords) > 0 {
+		for _, keyword := range descriptionKeywords {
+			descriptionTerms += ` AND description ~ "` + keyword + `"`
+		}
+	}
 
 	searchResult, response, err := s.targetClient.Issue.
-		Search(fmt.Sprintf(`project = %s AND summary ~ "%s"`, s.targetProjectKey, searchTerm),
+		Search(fmt.Sprintf(`project = %s AND summary ~ "%s"%s`, s.targetProjectKey, summaryTerm, descriptionTerms),
 			&jira.SearchOptions{MaxResults: maxResultsPerSearch, Fields: []string{"key", "summary"}})
 	if err != nil {
 		return nil, parseResponseError("issueExists", response, err)

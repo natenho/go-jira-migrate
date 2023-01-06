@@ -59,7 +59,7 @@ func (s *migrator) migrateLink(link *jira.IssueLink, targetIssue *jira.Issue) er
 			return errors.Errorf("could not remote link to %s: %#v", sourceInwardIssue.Key, err)
 		}
 
-		targetInwardIssue, err = s.findTargetIssueBySummary(sourceInwardIssue.Fields.Summary)
+		targetInwardIssue, err = s.findTargetIssueBySummaryAndDescription(sourceInwardIssue.Fields.Summary)
 		if err != nil {
 			return err
 		}
@@ -87,7 +87,7 @@ func (s *migrator) migrateLink(link *jira.IssueLink, targetIssue *jira.Issue) er
 		}
 
 		if targetOutwardIssue == nil && s.canMigrateLinkedIssue(sourceOutwardIssue) {
-			targetOutwardIssue, err = s.findTargetIssueBySummary(sourceOutwardIssue.Fields.Summary)
+			targetOutwardIssue, err = s.findTargetIssueBySummaryAndDescription(sourceOutwardIssue.Fields.Summary)
 			if err != nil {
 				return err
 			}
