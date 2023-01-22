@@ -1,4 +1,5 @@
  # GO JIRA Migration Tool
+ [![Donate!](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=D5KHS5GJPJ5PQ&currency_code=BRL&source=url)
  [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnatenho%2Fgo-jira-migrate.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnatenho%2Fgo-jira-migrate?ref=badge_shield)
 
 This tool can migrate team-managed project issues between two JIRA Cloud accounts.
