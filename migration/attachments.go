@@ -37,10 +37,10 @@ func (s *migrator) migrateAttachment(attachment *jira.Attachment, targetIssueID 
 		return errors.Errorf("Could not download attachment %s %s", attachment.Filename, err)
 	}
 
-	var contentLength int64
+	var attachmentSize int64
 	if response != nil {
 		defer response.Body.Close()
-		contentLength = response.ContentLength
+		attachmentSize = response.ContentLength
 	}
 
 	_, postResponse, err := s.targetClient.Issue.PostAttachment(targetIssueID, response.Body, attachment.Filename)
@@ -52,5 +52,5 @@ func (s *migrator) migrateAttachment(attachment *jira.Attachment, targetIssueID 
 		err = errors.Wrapf(err, "Review upload limits for target account: Refer to https://support.atlassian.com/jira-cloud-administration/docs/configure-file-attachments/")
 	}
 
-	return parseResponseError(fmt.Sprintf("migrateAttachment(%s, %d bytes)", attachment.Filename, contentLength), postResponse, err)
+	return parseResponseError(fmt.Sprintf("migrateAttachment(%s, %d bytes)", attachment.Filename, attachmentSize), postResponse, err)
 }
