@@ -23,7 +23,12 @@ type Result struct {
 const maxResultsPerSearch = 100
 
 func (r Result) String() string {
-	return fmt.Sprintf("%s;%s;%s;%#v", r.SourceKey, r.SourceSummary, r.TargetKey, r.Errors)
+	result := "OK"
+	if len(r.Errors) > 0 {
+		result = fmt.Sprintf("%#v", r.Errors)
+	}
+
+	return fmt.Sprintf("%s;%s;%s;%#v", r.SourceKey, r.SourceSummary, r.TargetKey, result)
 }
 
 func (r Result) HasTargetIssue() bool {
