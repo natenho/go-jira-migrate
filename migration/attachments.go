@@ -45,11 +45,10 @@ func (s *migrator) migrateAttachment(attachment *jira.Attachment, targetIssueID 
 
 	_, postResponse, err := s.targetClient.Issue.PostAttachment(targetIssueID, response.Body, attachment.Filename)
 	if postResponse != nil {
+		if postResponse.StatusCode == http.StatusRequestEntityTooLarge {
+			err = errors.Wrapf(err, "Review upload limits for target account: Refer to https://support.atlassian.com/jira-cloud-administration/docs/configure-file-attachments/")
+		}
 		defer postResponse.Body.Close()
-	}
-
-	if postResponse.StatusCode == http.StatusRequestEntityTooLarge {
-		err = errors.Wrapf(err, "Review upload limits for target account: Refer to https://support.atlassian.com/jira-cloud-administration/docs/configure-file-attachments/")
 	}
 
 	return parseResponseError(fmt.Sprintf("migrateAttachment(%s, %d bytes)", attachment.Filename, attachmentSize), postResponse, err)
