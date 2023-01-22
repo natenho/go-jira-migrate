@@ -6,6 +6,8 @@ This tool can migrate team-managed project issues between two JIRA Cloud account
 
 ## Usage
 
+[Download the latest binaries](https://github.com/natenho/go-jira-migrate/releases/latest) and run
+
 ```
   -api-key string
         API Key (to create one, visit https://tinyurl.com/jira-api-token/)
