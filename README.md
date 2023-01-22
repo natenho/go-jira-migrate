@@ -1,4 +1,5 @@
  # GO JIRA Migration Tool
+ [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnatenho%2Fgo-jira-migrate.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnatenho%2Fgo-jira-migrate?ref=badge_shield)
 
 This tool can migrate team-managed project issues between two JIRA Cloud accounts.
 
@@ -41,8 +42,11 @@ This example is a common usage scenario, migrating all pending issues.
 
 ### Full example
 
-This example include some additional custom fields to be migrated, like issue "Story Points".
+This example include some additional switches and custom fields to be migrated, like issue "Story Points".
 
 ```
 ./go-jira-migrate -workers=8 -sprints=true -delete-on-error=true -source https://SOURCE-JIRA.atlassian.net/ -target https://TARGET-JIRA.atlassian.net/ -user your-jira-user -api-key xxxxxxxxxxxxxxxxxxx -source-project SOURCE-PROJ -target-project TARGET-PROJ -query "status != Done" -field "Story Points" -field "Start date" -field "Due date" -field "due" -field "duedate" -field "Due Data" -field "Issue color"
 ```
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnatenho%2Fgo-jira-migrate.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnatenho%2Fgo-jira-migrate?ref=badge_large)
