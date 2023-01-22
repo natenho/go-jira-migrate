@@ -28,7 +28,7 @@ func (r Result) String() string {
 		result = fmt.Sprintf("%#v", r.Errors)
 	}
 
-	return fmt.Sprintf("%s;%s;%s;%#v", r.SourceKey, r.SourceSummary, r.TargetKey, result)
+	return fmt.Sprintf("%s;%s;%s;%s", r.SourceKey, r.SourceSummary, r.TargetKey, result)
 }
 
 func (r Result) HasTargetIssue() bool {
