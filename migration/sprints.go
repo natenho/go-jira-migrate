@@ -91,6 +91,10 @@ func (s *migrator) setupTargetSprint(sourceIssue *jira.Issue, targetIssue *jira.
 
 		if sourceSprint["state"] == "future" {
 			openSourceSprint = sourceSprint
+		}
+
+		if sourceSprint["state"] == "active" {
+			openSourceSprint = sourceSprint
 			break
 		}
 	}
