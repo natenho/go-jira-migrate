@@ -1,6 +1,7 @@
 package migration
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/natenho/go-jira"
@@ -50,6 +51,9 @@ func getAvailableFieldsPerIssueType(client *jira.Client, projectKey string) (map
 	}
 
 	projectMeta := meta.GetProjectWithKey(projectKey)
+	if projectMeta == nil {
+		return nil, fmt.Errorf("Create metadata not found for %s at %s, make sure the current user has access to create issues", projectKey, client.GetBaseURL().Host)
+	}
 
 	for _, issueType := range projectMeta.IssueTypes {
 		for fieldKey := range issueType.Fields {
