@@ -100,6 +100,16 @@ func (s *migrator) migrateIssue(issueKey string) Result {
 		}
 	}
 
+	if s.deleteOnError && len(result.Errors) > 0 {
+		if response, err := s.targetClient.Issue.Delete(createdIssue.Key); err != nil {
+			if err != nil {
+				result.Errors = append(result.Errors, parseResponseError("delete", response, err))
+				return result
+			}
+		}
+		result.Errors = append(result.Errors, errors.New("deleted"))
+	}
+
 	return result
 }
 
@@ -115,7 +125,6 @@ func (s *migrator) getSourceIssueByKey(issueKey string) (*jira.Issue, error) {
 
 func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error) {
 	targetIssue := &jira.Issue{
-		Key: sourceIssue.Key,
 		Fields: &jira.IssueFields{
 			Type:        jira.IssueType{Name: sourceIssue.Fields.Type.Name},
 			Project:     jira.Project{Key: s.targetProjectKey},

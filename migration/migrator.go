@@ -55,6 +55,7 @@ type migrator struct {
 
 	workerPoolSize int
 	importSprints  bool
+	deleteOnError  bool
 }
 
 type Option func(m *migrator)
@@ -88,6 +89,12 @@ func WithCustomFields(customFieldNames ...string) Option {
 func WithSprints(value bool) Option {
 	return func(m *migrator) {
 		m.importSprints = value
+	}
+}
+
+func WithDeleteOnError(value bool) Option {
+	return func(m *migrator) {
+		m.deleteOnError = value
 	}
 }
 
