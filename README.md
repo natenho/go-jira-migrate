@@ -2,7 +2,7 @@
  [![Donate!](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=D5KHS5GJPJ5PQ&currency_code=BRL&source=url)
  [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnatenho%2Fgo-jira-migrate.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnatenho%2Fgo-jira-migrate?ref=badge_shield)
 
-This tool can migrate team-managed project issues between two JIRA Cloud accounts.
+This tool can migrate team-managed project issues between two JIRA Cloud accounts. It migrate attachments, description, comments, images, links, custom fields and so on.
 
 ## Usage
 
@@ -32,6 +32,20 @@ This tool can migrate team-managed project issues between two JIRA Cloud account
   -workers int
         How many migrations should occur in parallel (default 8)
 ```
+
+## Recommendations
+
+- Make sure the user has Administrator access to the target JIRA project
+- Make sure assignees and reporters have access to the target JIRA project
+- The target JIRA project must exist and must have the same issue type and custom fields
+- Make sure that attachment upload sizes are identical between the accounts (Refer to https://support.atlassian.com/jira-cloud-administration/docs/configure-file-attachments/ to configure limits)
+
+## Features and Limitations
+
+- Created issues in the target project will not have the same key as the source project (even if the project keys are the same)
+- Created issues are enriched with migration information, so it is easy to find a issue in the new JIRA project by the old key
+- The original issue will be linked to the created issue
+- Comments are all made by the migration user, mentioning the original user that wrote the comment
 
 ### Simple example
 
