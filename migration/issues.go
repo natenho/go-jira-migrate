@@ -154,7 +154,7 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 
 	targetIssue.Fields.Labels = append(targetIssue.Fields.Labels, s.additionalLabels...)
 
-	if s.canMigrateField(sourceIssue.Fields.Type.Name, "priority") {
+	if sourceIssue.Fields.Priority != nil && s.canMigrateField(sourceIssue.Fields.Type.Name, "priority") {
 		targetIssue.Fields.Priority = &jira.Priority{Name: sourceIssue.Fields.Priority.Name}
 	}
 
