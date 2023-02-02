@@ -101,7 +101,7 @@ func (s *migrator) setupTargetSprint(sourceIssue *jira.Issue, targetIssue *jira.
 
 	rawSourceSprintID, ok := openSourceSprint["id"]
 	if !ok {
-		return errors.Errorf("Source sprint ID could not be parsed")
+		return nil
 	}
 
 	sourceSprintID := int(rawSourceSprintID.(float64))

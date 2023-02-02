@@ -69,7 +69,6 @@ func (s *migrator) migrateIssue(issueKey string) Result {
 
 	if err := s.setupTargetSprint(sourceIssue, createdIssue); err != nil {
 		result.Errors = append(result.Errors, err)
-		return result
 	}
 
 	for err := range s.migrateComments(sourceIssue, createdIssue) {
