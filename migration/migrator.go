@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/natenho/go-jira"
 	"github.com/natenho/go-jira-migrate/internal"
@@ -21,6 +23,7 @@ type Result struct {
 }
 
 const maxResultsPerSearch = 100
+const rateLimitRetryInterval = time.Second * 30
 
 func (r Result) String() string {
 	result := "OK"
@@ -33,6 +36,10 @@ func (r Result) String() string {
 
 func (r Result) HasTargetIssue() bool {
 	return r.TargetKey != ""
+}
+
+func (r Result) HasTooManyRequestsError() bool {
+	return strings.Contains(strings.ToLower(r.String()), "too many") //TODO Improve this error detection
 }
 
 type Migrator interface {
@@ -239,7 +246,15 @@ func getBoard(client *jira.Client, projectKey string) (*jira.Board, error) {
 
 func (s *migrator) worker(id int, issueKeys <-chan string, results chan<- Result, wg *sync.WaitGroup) {
 	for issueKey := range issueKeys {
-		results <- s.migrateIssue(issueKey)
+		for {
+			result := s.migrateIssue(issueKey)
+			if result.HasTooManyRequestsError() {
+				time.Sleep(rateLimitRetryInterval)
+				continue
+			}
+			results <- result
+			break
+		}
 	}
 
 	wg.Done()
