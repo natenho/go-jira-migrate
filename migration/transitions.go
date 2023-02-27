@@ -10,7 +10,7 @@ import (
 func (s *migrator) migrateStatus(sourceIssue *jira.Issue, targetIssue *jira.Issue) chan error {
 	wg := &sync.WaitGroup{}
 
-	errChan := make(chan error, len(sourceIssue.Fields.Attachments))
+	errChan := make(chan error, 1)
 	defer close(errChan)
 
 	targetTransitions, response, err := s.targetClient.Issue.GetTransitions(targetIssue.Key)

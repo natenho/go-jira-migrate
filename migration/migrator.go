@@ -47,6 +47,8 @@ type Migrator interface {
 }
 
 type migrator struct {
+	currentUser *jira.User
+
 	additionalLabels []string
 	customFields     []string
 
@@ -160,6 +162,14 @@ func NewMigrator(sourceUrl, targetUrl, user, apiToken, sourceProjectKey, targetP
 func (s *migrator) Execute(jql string) (chan Result, error) {
 	results := make(chan Result)
 
+	currentUser, response, err := s.sourceClient.User.GetSelf()
+	if err != nil {
+		close(results)
+		return results, err
+	}
+
+	s.currentUser = currentUser
+
 	if err := s.discoverFields(); err != nil {
 		close(results)
 		return results, err
@@ -252,6 +262,7 @@ func (s *migrator) worker(id int, issueKeys <-chan string, results chan<- Result
 				time.Sleep(rateLimitRetryInterval)
 				continue
 			}
+
 			results <- result
 			break
 		}

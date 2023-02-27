@@ -60,8 +60,23 @@ func (s *migrator) migrateIssue(issueKey string) Result {
 	createdIssue, response, err := s.targetClient.Issue.Create(targetIssue)
 	defer response.Body.Close()
 
+	err = parseResponseError("Create", response, err)
+
+	if err != nil && isUserCannotBeAssignedError(err) { //TODO Improve this
+		targetIssue.Fields.Assignee = s.currentUser
+		targetIssue.Fields.Description = fmt.Sprintf(
+			"%s\n\n{color:red}_Original issue assigned to [~accountid:%s]_{color}",
+			targetIssue.Fields.Description,
+			sourceIssue.Fields.Assignee.AccountID)
+
+		createdIssue, response, err = s.targetClient.Issue.Create(targetIssue)
+		defer response.Body.Close()
+	}
+
 	if err != nil {
-		result.Errors = append(result.Errors, parseResponseError("Create", response, errors.Wrapf(err, "could not migrate %s", sourceIssue.Key)))
+		err = errors.Wrapf(err, "could not migrate %s", sourceIssue.Key)
+
+		result.Errors = append(result.Errors, parseResponseError("Create", response, err))
 		return result
 	}
 
@@ -112,6 +127,10 @@ func (s *migrator) migrateIssue(issueKey string) Result {
 	return result
 }
 
+func isUserCannotBeAssignedError(err error) bool {
+	return strings.Contains(strings.ToLower(err.Error()), "cannot be assigned issues")
+}
+
 func (s *migrator) getSourceIssueByKey(issueKey string) (*jira.Issue, error) {
 	issue, response, err := s.sourceClient.Issue.Get(issueKey, nil)
 	if err != nil {
@@ -136,6 +155,8 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 
 	if s.canSetAssignee(sourceIssue) {
 		targetIssue.Fields.Assignee = sourceIssue.Fields.Assignee
+	} else if sourceIssue.Fields.Status.StatusCategory.Key == "done" {
+		targetIssue.Fields.Assignee = s.currentUser
 	}
 
 	if s.canSetReporter(sourceIssue) {
