@@ -39,17 +39,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag: ${{ steps.tag_release.outputs.new_tag }}
-          name: Release ${{ steps.tag_release.outputs.new_tag }}
+          name: ${{ steps.tag_release.outputs.new_tag }}
           body: ${{ steps.tag_release.outputs.changelog }}
-          
-      - name: Upload Windows Binary
-        uses: actions/upload-artifact@v3
-        with:
-          name: go-jira-migrate-windows-amd64
-          path: go-jira-migrate.exe
-
-      - name: Upload Linux Binary
-        uses: actions/upload-artifact@v3
-        with:
-          name: go-jira-migrate-linux-amd64
-          path: go-jira-migrate
+          artifacts: go-jira-migrate*
