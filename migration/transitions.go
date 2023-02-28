@@ -15,9 +15,12 @@ func (s *migrator) migrateStatus(sourceIssue *jira.Issue, targetIssue *jira.Issu
 
 	targetTransitions, response, err := s.targetClient.Issue.GetTransitions(targetIssue.Key)
 	if err != nil {
+		wg.Add(1)
 		go func() {
 			errChan <- parseResponseError("GetTransitions", response, err)
+			wg.Done()
 		}()
+		wg.Wait()
 		return errChan
 	}
 
