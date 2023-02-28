@@ -157,6 +157,12 @@ func (s *migrator) buildTargetIssue(sourceIssue *jira.Issue) (*jira.Issue, error
 		targetIssue.Fields.Assignee = sourceIssue.Fields.Assignee
 	} else if sourceIssue.Fields.Status.StatusCategory.Key == "done" {
 		targetIssue.Fields.Assignee = s.currentUser
+		if sourceIssue.Fields.Assignee != nil {
+			targetIssue.Fields.Description = fmt.Sprintf(
+				"%s\n\n{color:red}_Original issue assigned to [~accountid:%s]_{color}",
+				targetIssue.Fields.Description,
+				sourceIssue.Fields.Assignee.AccountID)
+		}
 	}
 
 	if s.canSetReporter(sourceIssue) {
