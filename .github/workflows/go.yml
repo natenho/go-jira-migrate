@@ -38,11 +38,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.tag_release.outputs.tag }}
-          release_name: Release ${{ steps.tag_release.outputs.tag }}
-          draft: false
-          prerelease: false
-
+          tag: ${{ steps.tag_release.outputs.tag }}
+          name: Release ${{ steps.tag_release.outputs.tag }}
+          body: ${{ steps.tag_release.outputs.changelog }}
+          
       - name: Upload Windows Binary
         uses: actions/upload-artifact@v3
         with:
