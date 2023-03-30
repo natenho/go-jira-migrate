@@ -18,6 +18,7 @@ func SanitizeTermForJQL(input string) string {
 	input = strings.ReplaceAll(input, "- ", " ")
 	input = strings.ReplaceAll(input, " -", " ")
 	input = strings.ReplaceAll(input, "\t", "\\t")
+	input = strings.ReplaceAll(input, `\`, `\\`)
 
 	const notAllowedSearchChars string = `{}-["]()?*+`
 
