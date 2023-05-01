@@ -10,9 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
@@ -24,6 +21,9 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v4
