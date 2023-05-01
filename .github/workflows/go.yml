@@ -35,15 +35,4 @@ jobs:
           version: latest
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
-          GORELEASER_CURRENT_TAG: ${{ steps.tag_release.outputs.new_tag }}
-
-      - name: Create Release
-        uses: ncipollo/release-action@v1
-        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag: ${{ steps.tag_release.outputs.new_tag }}
-          name: ${{ steps.tag_release.outputs.new_tag }}
-          body: ${{ steps.tag_release.outputs.changelog }}
-          artifacts: go-jira-migrate*
