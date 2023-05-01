@@ -31,7 +31,8 @@ jobs:
           version: latest
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
+          GORELEASER_CURRENT_TAG: ${{ steps.tag_release.outputs.new_tag }}
 
       - name: Create Release
         uses: ncipollo/release-action@v1
