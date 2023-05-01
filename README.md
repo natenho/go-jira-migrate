@@ -10,6 +10,8 @@ This tool can migrate both company-managed and team-managed project issues betwe
 - [What migrates in a cloud-to-cloud migration for Jira](https://support.atlassian.com/migration/docs/what-migrates-in-a-cloud-to-cloud-migration-for-jira/)
 
 ## Usage
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnatenho%2Fgo-jira-migrate.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnatenho%2Fgo-jira-migrate?ref=badge_shield)
+
 
 [Download the latest binaries](https://github.com/natenho/go-jira-migrate/releases/latest) and run
 
