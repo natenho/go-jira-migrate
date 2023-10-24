@@ -2,9 +2,9 @@ builds:
   - id: go-jira-migrate
     main: main.go
     binary: go-jira-migrate
-    goos: [ windows, darwin, linux, freebsd, openbsd ]
-    goarch: [ amd64, arm, arm64 ]
-    goarm: [ 6, 7 ]
+    goos: [windows, darwin, linux, freebsd, openbsd]
+    goarch: [amd64, arm, arm64]
+    goarm: ["6", "7"]
     ignore:
       - goos: windows
         goarch: arm
@@ -16,10 +16,10 @@ builds:
       -s -w
 archives:
   - id: go-jira-migrate
-    builds: [ go-jira-migrate ]
+    builds: [go-jira-migrate]
     format: tar.gz
     files:
-      - README.md      
+      - README.md
       - LICENSE
 dist: target/dist
 release:
