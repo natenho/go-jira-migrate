@@ -3,9 +3,17 @@ package main
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"log"
+	"runtime/debug"
 
 	"github.com/natenho/go-jira-migrate/migration"
+)
+
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
 )
 
 const defaultWorkerPoolSize = 8
@@ -41,6 +49,7 @@ func main() {
 	var workers = flag.Int("workers", defaultWorkerPoolSize, "How many migrations should occur in parallel")
 	var importSprints = flag.Bool("sprints", true, "Define if sprints will be imported")
 	var deleteOnError = flag.Bool("delete-on-error", false, "Define if issues migrated with errors should be deleted")
+	var version = flag.Bool("version", false, "Print version and exit")
 
 	var customFields flagStringArray
 	flag.Var(&customFields, "field", "Custom fields to read from source project (includes 'Story point estimate' and 'Flagged' by default)")
@@ -54,20 +63,28 @@ func main() {
 
 	flag.Parse()
 
+	if *version {
+		printVersion()
+		return
+	}
+
 	if *sourceProjectKey == "" {
 		log.Println("Invalid project key")
+		printVersion()
 		flag.Usage()
 		return
 	}
 
 	if *targetProjectKey == "" {
 		log.Println("Invalid target project key")
+		printVersion()
 		flag.Usage()
 		return
 	}
 
 	if *jql == "" {
 		log.Println("Invalid JQL query")
+		printVersion()
 		flag.Usage()
 		return
 	}
@@ -103,4 +120,10 @@ func main() {
 	}
 
 	log.Printf("%d issues processed.", issueCount)
+}
+
+func printVersion() {
+	if buildInfo, ok := debug.ReadBuildInfo(); ok {
+		fmt.Printf("%s@%s commit %s (%s) %s\n", buildInfo.Path, version, commit, date, buildInfo.GoVersion)
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/url"
 	"strings"
 	"sync"
@@ -114,19 +115,19 @@ func WithDeleteOnError(value bool) Option {
 
 func NewMigrator(sourceUrl, targetUrl, user, apiToken, sourceProjectKey, targetProjectKey string, options ...Option) (Migrator, error) {
 	if _, err := url.Parse(sourceUrl); err != nil || sourceUrl == "" {
-		return nil, errors.New("Invalid source url")
+		return nil, errors.New("invalid source url")
 	}
 
 	if _, err := url.Parse(targetUrl); err != nil || targetUrl == "" {
-		return nil, errors.New("Invalid target url")
+		return nil, errors.New("invalid target url")
 	}
 
 	if user == "" {
-		return nil, errors.New("Invalid user")
+		return nil, errors.New("invalid user")
 	}
 
 	if apiToken == "" {
-		return nil, errors.New("Invalid API token")
+		return nil, errors.New("invalid API token")
 	}
 
 	transport := jira.BasicAuthTransport{Username: user, Password: apiToken}
@@ -170,6 +171,16 @@ func (s *migrator) Execute(jql string) (chan Result, error) {
 
 	s.currentUser = currentUser
 
+	if err := checkProjectAccess(s.sourceClient, s.sourceProjectKey); err != nil {
+		close(results)
+		return results, fmt.Errorf("could not get source project: %w", err)
+	}
+
+	if err := checkProjectAccess(s.targetClient, s.targetProjectKey); err != nil {
+		close(results)
+		return results, fmt.Errorf("could not get target project: %w", err)
+	}
+
 	if err := s.discoverFields(); err != nil {
 		close(results)
 		return results, err
@@ -178,13 +189,13 @@ func (s *migrator) Execute(jql string) (chan Result, error) {
 	sourceBoard, err := getBoard(s.sourceClient, s.sourceProjectKey)
 	if err != nil {
 		close(results)
-		return results, err
+		return results, fmt.Errorf("could not get source board: %w", err)
 	}
 
 	targetBoard, err := getBoard(s.targetClient, s.targetProjectKey)
 	if err != nil {
 		close(results)
-		return results, err
+		return results, fmt.Errorf("could not get target board: %w", err)
 	}
 
 	s.targetBoard = targetBoard
@@ -251,6 +262,10 @@ func getBoard(client *jira.Client, projectKey string) (*jira.Board, error) {
 		return nil, parseResponseError("GetAllBoards", response, err)
 	}
 
+	if boards.Values == nil || len(boards.Values) == 0 {
+		return nil, fmt.Errorf("no boards found in %s, at least one board is required", projectKey)
+	}
+
 	return &boards.Values[0], nil //TODO Support multiple board migration
 }
 
@@ -259,6 +274,7 @@ func (s *migrator) worker(id int, issueKeys <-chan string, results chan<- Result
 		for {
 			result := s.migrateIssue(issueKey)
 			if result.HasTooManyRequestsError() {
+				log.Println("Taking a break to respect the rate limit restrictions...")
 				time.Sleep(rateLimitRetryInterval)
 				continue
 			}
@@ -278,10 +294,23 @@ func parseResponseError(operation string, response *jira.Response, err error) er
 	}
 
 	if response == nil {
-		return errors.New("Invalid response")
+		return errors.New("invalid response")
 	}
 
 	responseBody, _ := io.ReadAll(response.Body)
 	_ = json.Indent(&out, responseBody, "", "  ")
 	return errors.Errorf("%s: %s: %s", operation, err, out.String())
+}
+
+func checkProjectAccess(client *jira.Client, projectKey string) error {
+	project, response, err := client.Project.Get(projectKey)
+	if err != nil {
+		return parseResponseError("Get", response, err)
+	}
+
+	if project == nil {
+		return fmt.Errorf("%s not found", projectKey)
+	}
+
+	return nil
 }
